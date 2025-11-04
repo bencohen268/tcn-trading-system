@@ -1,0 +1,38 @@
+# Path configuration
+# Absolute and relative paths for the project
+
+# Base directory (project root)
+base_dir: "/Users/bencohen/Library/Mobile Documents/com~apple~CloudDocs/Files/Courses : Code/TCN"
+
+# Data directories
+data:
+  root: "data"
+  raw: "data/raw"
+  processed: "data/processed"
+  cache: "data/cache"
+
+# Model directories
+models:
+  root: "models"
+  checkpoints: "models/checkpoints"
+  exports: "models/exports"
+
+# Results directories
+results:
+  root: "results"
+  figures: "results/figures"
+  metrics: "results/metrics"
+  backtests: "results/backtests"
+
+# Logs
+logs:
+  root: "logs"
+  training: "logs/training"
+  backtest: "logs/backtest"
+
+# Notebooks
+notebooks: "notebooks"
+
+# Documentation
+docs: "docs"
+
