@@ -2,14 +2,30 @@
 
 A production-ready causal temporal convolutional network (TCN) for predicting next-bar direction and generating tradable signals with risk management.
 
+## 🎯 **Improvements Now Integrated!**
+
+**The system now includes all improvements by default when you run `python run_all.py`:**
+
+✅ **42 advanced features** (12 basic + 30 advanced including regime detection, microstructure, momentum)  
+✅ **Multi-day return labels** (5-day horizon instead of next-bar for less noise)  
+✅ **Larger TCN architecture** (optimized for more features)  
+✅ **Benchmark comparison** (compare ML to Buy & Hold, MA Crossover, Momentum, Mean Reversion)  
+✅ **Comprehensive edge analysis** (hit rates, calibration, cost sensitivity, rolling performance)  
+
+**Just run `python run_all.py` and it will use the improved system automatically!**
+
+---
+
 ## Overview
 
 This system implements a complete ML trading pipeline:
 
-1. **Data & Features**: Engineers 12 features per bar from OHLCV data
-2. **TCN Model**: Causal deep learning for next-bar direction prediction  
+1. **Data & Features**: Engineers 42 features per bar from OHLCV data
+2. **TCN Model**: Causal deep learning for multi-day return prediction  
 3. **Risk Map**: Converts probabilities to positions with dead band + volatility scaling
 4. **Backtest Engine**: Simulates P&L with realistic transaction costs
+5. **Benchmarks**: Compares to traditional strategies
+6. **Edge Analysis**: Comprehensive diagnostics to detect genuine predictive power
 
 **Key Features**:
 - ✅ Strictly causal (no future leakage)
@@ -17,6 +33,10 @@ This system implements a complete ML trading pipeline:
 - ✅ Modular design (swap features, models, or risk maps independently)
 - ✅ Production-ready code with proper train/val/test splits
 - ✅ Transaction cost modeling
+- ✅ **NEW**: Advanced features and multi-day prediction
+- ✅ **NEW**: Benchmark strategies and edge analysis
+
+---
 
 ## Quick Start
 
@@ -61,12 +81,19 @@ data:
 
 ### 3. Run
 
-**Option A: Run everything**
+**Run the complete improved pipeline:**
 ```bash
 python run_all.py
 ```
 
-**Option B: Run layer by layer**
+This automatically uses:
+- ✅ 42 advanced features (not just 12)
+- ✅ Multi-day labels (5-day horizon)
+- ✅ Larger TCN architecture
+- ✅ Benchmark comparisons
+- ✅ Comprehensive edge analysis
+
+**Or run layer by layer:**
 ```bash
 python run_layer1.py      # Data & features
 python run_layer2.py      # Windowing

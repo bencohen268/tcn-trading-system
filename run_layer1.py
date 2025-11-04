@@ -23,7 +23,16 @@ import pandas as pd
 # Project imports
 from utils import load_config, get_paths, set_seed
 from data import load_raw_data, save_processed_data, split_by_date
-from features import FeatureEngineer, create_binary_target, estimate_volatility
+from features import (
+    FeatureEngineer, 
+    create_binary_target, 
+    estimate_volatility,
+    AdvancedFeatureEngineer,
+    add_calendar_features,
+    create_multiday_return_label,
+    create_regime_labels,
+    create_volatility_labels,
+)
 from visualization import generate_layer1_report
 
 
@@ -105,38 +114,119 @@ def main():
     # 4. Create features
     print("\n[4/8] Engineering features...")
     
-    feature_engineer = FeatureEngineer(
-        vol_window=config['features']['vol_window'],
-        sma_fast_period=config['features']['sma_fast_period'],
-        sma_slow_period=config['features']['sma_slow_period'],
-        volume_window=config['features']['volume_window'],
-        normalization=config['features']['normalization'],
-        rolling_norm=config['features']['rolling_norm'],
-    )
+    # Check if using advanced features
+    use_advanced = config['data'].get('use_advanced_features', False)
     
-    # Fit on training data only
-    feature_engineer.fit(splits['train'])
-    
-    # Transform all splits
-    features = {}
-    for split_name, split_df in splits.items():
-        features[split_name] = feature_engineer.transform(split_df)
-        print(f"  {split_name}: {features[split_name].shape}")
+    if use_advanced:
+        print("  Using ADVANCED feature set (~42 features)")
+        
+        # Basic features (12)
+        basic_engineer = FeatureEngineer(
+            vol_window=config['features']['vol_window'],
+            sma_fast_period=config['features']['sma_fast_period'],
+            sma_slow_period=config['features']['sma_slow_period'],
+            volume_window=config['features']['volume_window'],
+            normalization=config['features']['normalization'],
+            rolling_norm=False,
+        )
+        basic_engineer.fit(splits['train'])
+        
+        # Advanced features (~30 more)
+        advanced_engineer = AdvancedFeatureEngineer(
+            regime_window=20,
+            vol_windows=[5, 10, 20, 60],
+            momentum_windows=[5, 10, 20],
+        )
+        
+        # Combine features
+        features = {}
+        for split_name, split_df in splits.items():
+            basic_feats = basic_engineer.transform(split_df)
+            advanced_feats = advanced_engineer.create_features(split_df)
+            calendar_feats = add_calendar_features(split_df)
+            
+            # Concatenate all features
+            combined = pd.concat([basic_feats, advanced_feats, calendar_feats], axis=1)
+            features[split_name] = combined
+            print(f"  {split_name}: {combined.shape} ({combined.shape[1]} features)")
+    else:
+        print("  Using BASIC feature set (12 features)")
+        
+        feature_engineer = FeatureEngineer(
+            vol_window=config['features']['vol_window'],
+            sma_fast_period=config['features']['sma_fast_period'],
+            sma_slow_period=config['features']['sma_slow_period'],
+            volume_window=config['features']['volume_window'],
+            normalization=config['features']['normalization'],
+            rolling_norm=config['features']['rolling_norm'],
+        )
+        
+        feature_engineer.fit(splits['train'])
+        
+        features = {}
+        for split_name, split_df in splits.items():
+            features[split_name] = feature_engineer.transform(split_df)
+            print(f"  {split_name}: {features[split_name].shape}")
     
     # 5. Create labels
     print("\n[5/8] Creating labels...")
     
-    labels = {}
-    for split_name, split_df in splits.items():
-        labels[split_name] = create_binary_target(
-            split_df,
-            threshold=config['data']['label_threshold']
-        )
-        
-        # Summary
+    # Check label type
+    label_type = config['data'].get('label_type', 'binary_direction')
+    use_alternative = config['data'].get('use_alternative_labels', False)
+    
+    if use_alternative or label_type != 'binary_direction':
+        if label_type == 'multiday_return':
+            print(f"  Using MULTI-DAY return labels (horizon={config['data'].get('label_horizon', 5)} days)")
+            print("  → Less noise than next-bar prediction")
+            labels = {}
+            for split_name, split_df in splits.items():
+                labels[split_name] = create_multiday_return_label(
+                    split_df,
+                    horizon=config['data'].get('label_horizon', 5),
+                    threshold=config['data']['label_threshold']
+                )
+        elif label_type == 'regime':
+            print("  Using REGIME classification labels")
+            print("  → Trend up/sideways/down prediction")
+            labels = {}
+            for split_name, split_df in splits.items():
+                labels[split_name] = create_regime_labels(split_df)
+        elif label_type == 'volatility':
+            print("  Using VOLATILITY prediction labels")
+            print("  → Predicting vol increases")
+            labels = {}
+            for split_name, split_df in splits.items():
+                labels[split_name] = create_volatility_labels(
+                    split_df, 
+                    horizon=config['data'].get('label_horizon', 5)
+                )
+        else:
+            print("  Using BASIC next-bar direction labels")
+            labels = {}
+            for split_name, split_df in splits.items():
+                labels[split_name] = create_binary_target(
+                    split_df,
+                    threshold=config['data']['label_threshold']
+                )
+    else:
+        print("  Using BASIC next-bar direction labels")
+        labels = {}
+        for split_name, split_df in splits.items():
+            labels[split_name] = create_binary_target(
+                split_df,
+                threshold=config['data']['label_threshold']
+            )
+    
+    # Summary
+    for split_name in labels.keys():
         label_clean = labels[split_name].dropna()
-        pct_up = (label_clean == 1).sum() / len(label_clean) * 100
-        print(f"  {split_name}: {pct_up:.2f}% up labels ({len(label_clean)} samples)")
+        if len(np.unique(label_clean)) == 2:
+            pct_up = (label_clean == 1).sum() / len(label_clean) * 100
+            print(f"  {split_name}: {pct_up:.2f}% positive labels ({len(label_clean)} samples)")
+        else:
+            counts = pd.Series(label_clean).value_counts()
+            print(f"  {split_name}: {len(label_clean)} samples, {len(counts)} classes")
     
     # 6. Estimate volatility
     print("\n[6/8] Estimating volatility...")

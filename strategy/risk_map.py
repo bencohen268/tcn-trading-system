@@ -52,6 +52,11 @@ def risk_map(
     p = np.atleast_1d(p)
     vol = np.atleast_1d(vol)
     
+    # IMPORTANT: Invert probabilities! 
+    # Model outputs were found to be inverted (high prob → down moves)
+    # So we use (1 - p) to correct this
+    p = 1.0 - p
+    
     # 1. Calculate edge (distance from neutral)
     edge = p - 0.5
     

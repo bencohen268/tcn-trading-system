@@ -24,11 +24,14 @@ data:
   
   # Feature engineering
   seq_len: 64  # Lookback window
-  n_features: 12  # Number of engineered features per bar
+  n_features: 56  # Number of engineered features per bar (12 basic + 44 advanced)
+  use_advanced_features: true  # Use advanced feature set
+  use_alternative_labels: true  # Use multi-day labels instead of next-bar
   
   # Label definition
-  label_type: "binary_direction"  # Options: "binary_direction", "threshold_direction"
-  label_threshold: 0.0  # For threshold-based labels
+  label_type: "multiday_return"  # Options: "binary_direction", "multiday_return", "regime", "volatility"
+  label_threshold: 0.005  # For threshold-based labels
+  label_horizon: 5  # Days ahead to predict (for multiday labels)
 
 # Feature configuration
 features:
@@ -62,10 +65,10 @@ model:
   name: "causal_tcn"
   
   # TCN architecture
-  num_inputs: 12          # Must match n_features
-  num_channels: [32, 32, 64]  # Channel size per TCN block
+  num_inputs: 56          # Must match n_features (updated for advanced features)
+  num_channels: [64, 64, 128]  # Channel size per TCN block (larger for more features)
   kernel_size: 3          # Convolution kernel size
-  dropout: 0.1            # Dropout rate
+  dropout: 0.15           # Dropout rate (increased for more features)
   
   # Output
   output_dim: 1           # Binary classification

@@ -329,7 +329,7 @@ def load_checkpoint(
     Returns:
         Checkpoint dictionary
     """
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint['model_state_dict'])
     
     print(f"Loaded checkpoint from {checkpoint_path}")
