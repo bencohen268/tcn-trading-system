@@ -20,18 +20,10 @@ This system implements a complete ML trading pipeline:
 
 ## Quick Start
 
-⚠️ **Note**: Your project path contains `:` which causes issues with Python's venv. See **SETUP.md** for solutions.
 
 ### 1. Install
 
-**Recommended**: Rename the parent directory first:
-```bash
-mv "/Users/bencohen/Library/Mobile Documents/com~apple~CloudDocs/Files/Courses : Code" \
-   "/Users/bencohen/Library/Mobile Documents/com~apple~CloudDocs/Files/Courses_Code"
-cd "/Users/bencohen/Library/Mobile Documents/com~apple~CloudDocs/Files/Courses_Code/TCN"
-```
-
-Then create venv and install:
+Create venv and install:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
